@@ -19,7 +19,8 @@ export const getSegments = (node, applyTransformations, rbox = false) => {
 
 const getPathSegments = (node, rbox) => {
   if (node.nodeType !== 1) return new pathUtils.PathSegmentArray()
-
+  const length = node.childNodes.length
+  const result = new pathUtils.PathSegmentArray()
   switch (node.nodeName) {
   case 'rect':
   case 'image':
@@ -41,12 +42,16 @@ const getPathSegments = (node, rbox) => {
   case 'clipPath':
   case 'a':
   case 'marker':
-    // Iterate trough all children and get the point cloud of each
+    // Iterate through all children and get the point cloud of each
     // Then transform it with viewbox matrix if needed
-    return node.childNodes.reduce((segments, child) => {
-      if (!child.matrixify) return segments
-      return segments.merge(getSegments(child, true).transform(child.generateViewBoxMatrix()))
-    }, new pathUtils.PathSegmentArray())
+    for (let i = 0; i < length; i++) {
+      const child = node.childNodes[i]
+      if (!child.matrixify) {
+        continue
+      }
+      result.push(...getSegments(child, true).transform(child.generateViewBoxMatrix()))
+    }
+    return result
   case 'circle':
     return pathUtils.getPathSegments(pathUtils.pathFrom.circle(node))
   case 'ellipse':
