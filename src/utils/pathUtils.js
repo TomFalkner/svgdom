@@ -636,7 +636,13 @@ export class PathSegmentArray extends Array {
 }
 
 export const getPathSegments = function (d) {
-  return new PathSegmentArray(...pathParser(d))
+  const parsedPath = pathParser(d)
+  const pathSegmentArray = new PathSegmentArray()
+  const parsedLength = parsedPath.length
+  for (let i = 0; i < parsedLength; i++) {
+    pathSegmentArray.push(parsedPath[i])
+  }
+  return pathSegmentArray
 }
 
 export const pointAtLength = function (d, len) {
