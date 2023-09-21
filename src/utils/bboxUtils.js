@@ -49,7 +49,11 @@ const getPathSegments = (node, rbox) => {
       if (!child.matrixify) {
         continue
       }
-      result.push(...getSegments(child, true).transform(child.generateViewBoxMatrix()))
+      const segments = getSegments(child, true).transform(child.generateViewBoxMatrix())
+      const segmentsLength = segments.length
+      for (let k = 0; k < segmentsLength; k++) {
+        result.push(segments[k])
+      }
     }
     return result
   case 'circle':
