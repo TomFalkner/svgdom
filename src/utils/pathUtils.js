@@ -94,17 +94,61 @@ function isBeziere (obj) {
   return obj instanceof Cubic
 }
 
-export const pathParser = (array) => {
+const M = 'M'
+const m = 'm'
+const L = 'L'
+const l = 'l'
+
+const operatorCharacters = new Set()
+operatorCharacters.add('a')
+operatorCharacters.add('A')
+operatorCharacters.add('C')
+operatorCharacters.add('c')
+operatorCharacters.add('h')
+operatorCharacters.add('H')
+operatorCharacters.add('L')
+operatorCharacters.add('l')
+operatorCharacters.add('m')
+operatorCharacters.add('M')
+operatorCharacters.add('Q')
+operatorCharacters.add('q')
+operatorCharacters.add('S')
+operatorCharacters.add('s')
+operatorCharacters.add('t')
+operatorCharacters.add('T')
+operatorCharacters.add('V')
+operatorCharacters.add('v')
+operatorCharacters.add('Z')
+operatorCharacters.add('z')
+
+const paramCnt = new Map()
+paramCnt.set('M', 2)
+paramCnt.set('m', 2)
+paramCnt.set('L', 2)
+paramCnt.set('l', 2)
+paramCnt.set('H', 1)
+paramCnt.set('h', 1)
+paramCnt.set('V', 1)
+paramCnt.set('v', 1)
+paramCnt.set('C', 6)
+paramCnt.set('c', 6)
+paramCnt.set('S', 4)
+paramCnt.set('s', 4)
+paramCnt.set('Q', 4)
+paramCnt.set('q', 4)
+paramCnt.set('T', 2)
+paramCnt.set('t', 2)
+paramCnt.set('A', 7)
+paramCnt.set('a', 7)
+paramCnt.set('z', 0)
+paramCnt.set('Z', 0)
+
+export const pathParser = (pathData) => {
 
   // prepare for parsing
-  const paramCnt = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 }
+  // const paramCnt = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 }
 
-  array = array
-    .replace(regex.numbersWithDots, pathRegReplace) // convert 45.123.123 to 45.123 .123
-    .replace(regex.pathLetters, ' $& ') // put some room between letters and numbers
-    .replace(regex.hyphen, '$1 -') // add space before hyphen
-    .trim() // trim
-    .split(regex.delimiter) // split into array
+  const array = pathTokenizer(pathData)
 
   // array now is an array containing all parts of a path e.g. ['M', '0', '0', 'L', '30', '30' ...]
   const arr = []
@@ -117,19 +161,22 @@ export const pathParser = (array) => {
 
   do {
     // Test if we have a path letter
-    if (regex.isPathLetter.test(array[index])) {
+    // if (regex.isPathLetter.test(array[index])) {
+    if (operatorCharacters.has(array[index])) {
       s = array[index]
       ++index
     // If last letter was a move command and we got no new, it defaults to [L]ine
-    } else if (s === 'M') {
-      s = 'L'
-    } else if (s === 'm') {
-      s = 'l'
+    } else if (s === M) {
+      s = L
+    } else if (s === m) {
+      s = l
     }
 
+    // const args = array.slice(index, (index = index + paramCnt[s.toUpperCase()])).map(parseFloat)
+    const args = array.slice(index, (index = index + paramCnt.get(s)))
     arr.push(
       pathHandlers[s].call(null,
-        array.slice(index, (index = index + paramCnt[s.toUpperCase()])).map(parseFloat),
+        args,
         p, r, p0,
         isBeziere(arr[arr.length - 1])
       )
@@ -139,6 +186,96 @@ export const pathParser = (array) => {
 
   return arr
 }
+
+// Use object instead of Set due to small size
+const numberCharacters = {
+  0: true,
+  1: true,
+  2: true,
+  3: true,
+  4: true,
+  5: true,
+  6: true,
+  7: true,
+  8: true,
+  9: true,
+  '-': true,
+  '.': true
+}
+
+const space = ' '
+const dot = '.'
+const comma = ','
+const empty = ''
+const newline = '\n'
+const hyphenCharacter = '-'
+
+function pathTokenizer(s) {
+  const length = s.length
+  const result = []
+  let index = 0
+  let word = ''
+  let alreadyDecimal = false
+  while (index <= length) {
+    if (index === length) {
+      if (word !== empty) {
+        result.push(+word)
+      }
+      index++
+      continue
+    }
+
+    const token = s[index]
+    if (token === space || token === comma || token === newline) {
+      if (word !== empty) {
+        result.push(+word)
+      }
+      alreadyDecimal = false
+      word = ''
+      index++
+      continue
+    }
+
+    if (numberCharacters[token]) {
+      if (token === hyphenCharacter) {
+        if (word !== empty) {
+          result.push(+word)
+        }
+        alreadyDecimal = false
+        word = token
+        index++
+        continue
+      }
+      if (token === dot) {
+        if (alreadyDecimal) {
+          result.push(+word)
+          word = token
+        } else {
+          alreadyDecimal = true
+          word.concat(token)
+        }
+        index++
+        continue
+      }
+      word.concat(token)
+    }
+
+    if (operatorCharacters.has(token)) {
+      if (word !== empty) {
+        result.push(+word)
+      }
+      result.push(token)
+      alreadyDecimal = false
+      word = ''
+      index++
+      continue
+    }
+
+    index++
+  }
+  return result
+}
+
 
 class Move {
   constructor (p) {

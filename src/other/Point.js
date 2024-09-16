@@ -3,20 +3,20 @@ import { SVGPoint } from '../dom/svg/SVGPoint.js'
 export class Point {
   // Initialize
   constructor (x, y) {
-    const base = { x: 0, y: 0 }
 
-    // ensure source as object
-    const source = Array.isArray(x)
-      ? { x: x[0], y: x[1] }
-      : typeof x === 'object'
-        ? { x: x.x, y: x.y }
-        : x != null
-          ? { x: x, y: (y != null ? y : x) }
-          : base // If y has no value, then x is used has its value
-
-    // merge source
-    this.x = source.x
-    this.y = source.y
+    if (Array.isArray(x)) {
+      this.x = x[0]
+      this.y = x[1]
+    } else if (typeof x === 'object') {
+      this.x = x.x
+      this.y = x.y
+    } else if (x != null) {
+      this.x = x
+      this.y = y != null ? y : x
+    } else {
+      this.x = 0
+      this.y = 0
+    }
   }
 
   abs () {
