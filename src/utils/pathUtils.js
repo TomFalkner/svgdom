@@ -210,7 +210,7 @@ const empty = ''
 const newline = '\n'
 const hyphenCharacter = '-'
 
-function pathTokenizer(s) {
+function pathTokenizer (s) {
   const length = s.length
   const result = []
   let index = 0
@@ -252,12 +252,12 @@ function pathTokenizer(s) {
           word = token
         } else {
           alreadyDecimal = true
-          word.concat(token)
+          word += token
         }
         index++
         continue
       }
-      word.concat(token)
+      word += token
     }
 
     if (operatorCharacters.has(token)) {
@@ -275,7 +275,6 @@ function pathTokenizer(s) {
   }
   return result
 }
-
 
 class Move {
   constructor (p) {
