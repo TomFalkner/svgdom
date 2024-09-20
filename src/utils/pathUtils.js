@@ -200,15 +200,18 @@ const numberCharacters = {
   8: true,
   9: true,
   '-': true,
-  '.': true
+  '.': true,
+  '+': true
 }
 
 const space = ' '
 const dot = '.'
 const comma = ','
 const empty = ''
+const exponent = 'e'
 const newline = '\n'
 const hyphenCharacter = '-'
+const plusCharacter = '+'
 
 function pathTokenizer (s) {
   const length = s.length
@@ -235,6 +238,7 @@ function pathTokenizer (s) {
       index++
       continue
     }
+
 
     if (numberCharacters[token]) {
       if (token === hyphenCharacter) {
@@ -268,6 +272,17 @@ function pathTokenizer (s) {
       alreadyDecimal = false
       word = ''
       index++
+      continue
+    }
+
+    if (token === exponent) {
+      word += token
+      index++
+      const nextChar = s[index]
+      if (nextChar === hyphenCharacter || nextChar === plusCharacter) {
+        word += nextChar
+        index++
+      }
       continue
     }
 
